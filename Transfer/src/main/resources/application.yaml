@@ -1,0 +1,45 @@
+server:
+  port: 8082
+cassandra:
+  password: cassandra
+  username: cassandra
+  url: jdbc:cassandra://${spring.cassandra.contact-points}:${spring.cassandra.port}/${spring.cassandra.keyspace-name}?user=${cassandra.username}&password=${cassandra.password}&localdatacenter=${spring.cassandra.load-balancing-policy.local-datacenter}
+
+
+spring:
+  application:
+    name: Transfer
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
+  minio:
+    access-key: Q3AM3UQ867SPQQA43P2F
+    secret-key: tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+    bucket: certs
+    create-bucket: true
+    url: http://localhost:9000
+
+  cassandra:
+    port: 9042
+    contact-points: localhost
+    keyspace-name: filesHashesKeyspace
+    load-balancing-policy:
+      local-datacenter: datacenter1
+    local-datacenter: datacenter1
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/changelog.yml
+    url: ${cassandra.url}&compliancemode=Liquibase
+    driver-class-name: com.ing.data.cassandra.jdbc.CassandraDriver
+
+
+
+  datasource:
+    name: cassandra_datasource
+    url: ${cassandra.url}
+    driver-class-name: com.ing.data.cassandra.jdbc.CassandraDriver
+    hikari:
+      minimum-idle: 1
+
