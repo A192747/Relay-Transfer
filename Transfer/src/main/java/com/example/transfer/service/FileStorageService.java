@@ -1,12 +1,13 @@
 package com.example.transfer.service;
 
-import com.example.transfer.payload.FileResponse;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
+import java.io.File;
 
 public interface FileStorageService {
-    FileResponse save(Path path, MultipartFile file);
+    boolean save(String path, MultipartFile file);
+
     boolean delete(String fileMetadata);
-    FileResponse getFile(String fileName);
+
+    File getFile(String fileName);
 }

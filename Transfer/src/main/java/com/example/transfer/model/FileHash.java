@@ -2,6 +2,9 @@ package com.example.transfer.model;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
@@ -9,6 +12,7 @@ import org.springframework.data.cassandra.core.mapping.Table;
 import java.util.UUID;
 
 @Table("file_hash")
+@Data
 public class FileHash {
     @PrimaryKey
     @NotNull
