@@ -13,8 +13,8 @@ public class HashController {
 
     private final HashService service;
 
-    @GetMapping("/cache")
+    @GetMapping("/hash")
     public String getCache() {
-        return service.getCache();
+        return service.getHash();
     }
 }
