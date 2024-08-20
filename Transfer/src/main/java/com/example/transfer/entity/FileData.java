@@ -1,4 +1,6 @@
 package com.example.transfer.entity;
 
-public record FileData(byte[] data, String fileName) {
+import java.io.Serializable;
+
+public record FileData(byte[] data, String fileName) implements Serializable {
 }

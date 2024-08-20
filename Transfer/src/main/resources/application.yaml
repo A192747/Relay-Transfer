@@ -4,7 +4,10 @@ server:
 services-urls:
   hash-generator: http://localhost:8081/api/hash
 
-recheck-period: 5
+recheck-period: 1
+
+expired-at:
+  amount: 1
 
 cassandra:
   password: cassandra
@@ -20,6 +23,7 @@ spring:
       max-file-size: 100MB
       max-request-size: 101MB
 
+
   cassandra:
     port: 9042
     contact-points: localhost
@@ -34,7 +38,8 @@ spring:
     url: ${cassandra.url}&compliancemode=Liquibase
     driver-class-name: com.ing.data.cassandra.jdbc.CassandraDriver
 
-
+  cache:
+    type: redis
 
   datasource:
     name: cassandra_datasource
@@ -42,6 +47,11 @@ spring:
     driver-class-name: com.ing.data.cassandra.jdbc.CassandraDriver
     hikari:
       minimum-idle: 1
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 
 minio:
   access-key: Q3AM3UQ867SPQQA43P2F

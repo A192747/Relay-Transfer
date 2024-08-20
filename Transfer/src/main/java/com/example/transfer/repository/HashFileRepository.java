@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface HashFileRepository extends CassandraRepository<FileHash, UUID> {
     @Query("SELECT * FROM file_hash WHERE hash=?0 ALLOW FILTERING")
     FileHash findFileHashByHash(String hash);
-    void deleteFileHashByHash(String hash);
+
+    void deleteFileHashById(UUID id);
 
 }

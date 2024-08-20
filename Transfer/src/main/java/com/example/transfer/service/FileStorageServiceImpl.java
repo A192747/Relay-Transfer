@@ -4,7 +4,7 @@ package com.example.transfer.service;
 import com.example.transfer.entity.FileData;
 import com.example.transfer.model.FileHash;
 import io.minio.*;
-import io.minio.errors.MinioException;
+import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -50,16 +50,10 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public boolean delete(String path, String fileName) {
-        try {
-            minioClient.deleteObjectTags(DeleteObjectTagsArgs.builder()
-                    .bucket(BUCKET_NAME)
-                    .object(path + '/' + fileName)
-                    .build());
-            log.info("file {} removed ", fileName);
-        } catch (MinioException | InvalidKeyException | IOException | NoSuchAlgorithmException e) {
-            return false;
+        if(deleteFile(path + '/' + fileName)) {
+            return deleteFile(path);
         }
-        return true;
+        return false;
     }
 
     @Override
@@ -71,6 +65,23 @@ public class FileStorageServiceImpl implements FileStorageService {
                 .build());
 
         return new FileData(response.readAllBytes(), fileName);
+    }
+
+
+    private boolean deleteFile(String path) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(path)
+                    .build());
+            log.info("file {} deleted", path);
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | ServerException |
+                 XmlParserException e) {
+            log.error(e.getMessage());
+            return false;
+        }
+        return true;
     }
 
 }

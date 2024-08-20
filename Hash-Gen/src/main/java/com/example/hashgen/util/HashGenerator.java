@@ -13,7 +13,19 @@ public class HashGenerator {
         String uniqueString;
 
         random.nextBytes(bytes);
+
+
         uniqueString = Base64.getEncoder().encodeToString(bytes);
-        return uniqueString.replace('/', '=');
+        return formString(uniqueString);
+    }
+
+    //remove '/' element
+    private static String formString(String string) {
+        char elem = '/';
+        int index = string.indexOf(elem);
+        if (index != -1) {
+            return string.replace(elem, string.charAt(Math.abs(index - 1)));
+        }
+        return string;
     }
 }

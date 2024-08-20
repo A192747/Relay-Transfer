@@ -3,18 +3,18 @@ package com.example.transfer.service;
 import com.example.transfer.entity.FileData;
 import com.example.transfer.mapper.HashFileMapper;
 import com.example.transfer.model.FileHash;
+import com.sun.jdi.InternalException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.List;
@@ -29,21 +29,29 @@ public class LinkService {
     private final HashService hashService;
     private final FileStorageService fileStorageService;
     private final HashFileMapper hashFileMapper;
+
+    @Value("${expired-at.amount:5}")
+    private Integer amount;
+
     @Transactional
     public String save(MultipartFile file, Timestamp expiredAt) {
         String fileHash = hashService.getHash();
         String fileName = file.getOriginalFilename();
 
+        log.info(String.valueOf(new Timestamp(System.currentTimeMillis())));
 
-        expiredAt = checkExpired(expiredAt);
+        expiredAt = checkAndFormExpiredAtTime(expiredAt);
+
+        log.info(String.valueOf(expiredAt));
 
         hashFileFieldRatioService.save(hashFileMapper.toEntity(fileName, fileHash, expiredAt));
         fileStorageService.save(fileHash, file);
         log.info("saved FileName = {}, Hash = {}", fileName, fileHash);
         return fileHash;
     }
-
+    @Cacheable(cacheNames = "file", key = "#hash")//, sync = true)
     public FileData getFileByHash(String hash) {
+        log.info("download file {} at time {}", hash, Calendar.getInstance().getTime());
         FileHash fileHash = hashFileFieldRatioService.getByHash(hash);
         if (fileHash != null) {
             return fileStorageService.getFile(hash, fileHash.getFileName());
@@ -51,7 +59,7 @@ public class LinkService {
         throw new NoSuchElementException("Не удалось найти файл!");
     }
 
-    @Scheduled(fixedRateString = "${recheck-period:10}", timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRateString = "${recheck-period:1}", timeUnit = TimeUnit.MINUTES)
     @Async
     public void checkAndDeleteIfExpired() {
         log.info("Searching expired files");
@@ -61,21 +69,23 @@ public class LinkService {
     }
 
     @Transactional
+    //почему-то не удаляются значения из кэша...
+    @CacheEvict(cacheNames = "file", key = "#elem.hash")
     public void deleteInServices(FileHash elem) {
         String hash = elem.getHash();
         String name = elem.getFileName();
-        fileStorageService.delete(hash, name);
-        hashFileFieldRatioService.deleteByHash(hash);
+        if(fileStorageService.delete(hash, name))
+            hashFileFieldRatioService.deleteById(elem.getId());
+        else
+            throw new InternalException("Не удалось удалить файл");
     }
 
-    //Установим время доступа к файлу по дефолту на 1 час
 
-
-    public Timestamp checkExpired(Timestamp expiredAt) {
+    private Timestamp checkAndFormExpiredAtTime(Timestamp expiredAt) {
         if(expiredAt == null) {
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Timestamp(System.currentTimeMillis()));
-            calendar.add(Calendar.HOUR, 1);
+            calendar.add(Calendar.MINUTE, amount);
             return new Timestamp(calendar.getTimeInMillis());
         } else {
             if (expiredAt.before(new Timestamp(System.currentTimeMillis())))
@@ -83,4 +93,5 @@ public class LinkService {
         }
         return expiredAt;
     }
+
 }
